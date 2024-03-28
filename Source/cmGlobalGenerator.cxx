@@ -1769,6 +1769,35 @@ void cmGlobalGenerator::Generate()
   msg << "Generating done (" << std::fixed << std::setprecision(1)
       << ms.count() / 1000.0L << "s)";
   this->CMakeInstance->UpdateProgress(msg.str(), -1);
+
+  {
+    std::map<cmStateEnums::TargetType, const char*> targetTypes{
+      { cmStateEnums::EXECUTABLE, "EXECUTABLE" },
+      { cmStateEnums::STATIC_LIBRARY, "STATIC_LIBRARY" },
+      { cmStateEnums::SHARED_LIBRARY, "SHARED_LIBRARY" },
+      { cmStateEnums::MODULE_LIBRARY, "MODULE_LIBRARY" },
+      { cmStateEnums::OBJECT_LIBRARY, "OBJECT_LIBRARY" },
+      { cmStateEnums::UTILITY, "UTILITY" },
+      { cmStateEnums::GLOBAL_TARGET, "GLOBAL_TARGET" },
+      { cmStateEnums::INTERFACE_LIBRARY, "INTERFACE_LIBRARY" },
+      { cmStateEnums::UNKNOWN_LIBRARY, "UNKNOWN_LIBRARY" },
+    };
+
+    cmSystemTools::Stdout("### ALL Targets:\n");
+
+    for (const auto& lg : this->LocalGenerators) {
+      for (const auto& target : lg->GetGeneratorTargets()) {
+        if (target->GetProperty("EXCLUDE_FROM_ALL")) {
+          continue;
+        }
+        if (target->GetType() == cmStateEnums::UTILITY) { //Skip ZERO_CHECK target plus...?
+          continue;
+        }
+        auto type = targetTypes[target->GetType()];
+        cmSystemTools::Stdout(std::string("### ") + target->GetName() + " " + type + "\n");
+      }
+    }
+  }
 }
 
 bool cmGlobalGenerator::ComputeTargetDepends()
